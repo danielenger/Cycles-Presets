@@ -18,7 +18,7 @@ bl_info = {
     "name": "Cycles Presets",
     "description": "Save Cycles Presets",
     "author": "Daniel Engler",
-    "version": (0, 0, 1),
+    "version": (0, 0, 2),
     "blender": (2, 80, 0),
     "location": "Properties > Render",
     "category": "Render"
@@ -30,8 +30,8 @@ from .cycles_presets import *
 
 classes = (
     CYCLESPRESETS_PT_panel,
-    CYCLESPRESETS_AddPresetObjectDisplay,
-    CYCLESPRESETS_MT_display_presets,
+    CYCLESPRESETS_OT_AddPreset,
+    CYCLESPRESETS_MT_DisplayPresets,
 )
 
 def register():

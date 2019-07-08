@@ -7,21 +7,22 @@ from bpy.types import Menu, Operator, Panel
 PRESET_SUBDIR = "cycles_presets"
 
 
-class CYCLESPRESETS_MT_display_presets(Menu):
+class CYCLESPRESETS_MT_DisplayPresets(Menu):
     bl_label = "Cycles Presets"
     preset_subdir = PRESET_SUBDIR
     preset_operator = "script.execute_preset"
     draw = Menu.draw_preset
 
 
-class CYCLESPRESETS_AddPresetObjectDisplay(AddPresetBase, Operator):
+class CYCLESPRESETS_OT_AddPreset(AddPresetBase, Operator):
     bl_idname = "cyclespresets.preset_add"
     bl_label = "Add Cycles Preset"
-    preset_menu = "CYCLESPRESETS_MT_display_presets"
+    preset_menu = "CYCLESPRESETS_MT_DisplayPresets"
 
-    preset_defines = ["cycles = bpy.context.scene.cycles"]
+    preset_defines = ["cycles = bpy.context.scene.cycles", "render = bpy.context.scene.render"]
 
     preset_values = [
+        "render.film_transparent",
         "cycles.aa_samples",
         "cycles.ao_bounces",
         "cycles.ao_bounces_render",
@@ -119,11 +120,16 @@ class CYCLESPRESETS_PT_panel(Panel):
     bl_label = "Cycles Presets"
     bl_category = "Cycles Presets"
 
+    @classmethod
+    def poll(cls, context):
+        if context.scene.render.engine == 'CYCLES':
+            return True
+
     def draw(self, context):
         row = self.layout.row(align=True)
-        row.menu(CYCLESPRESETS_MT_display_presets.__name__,
-                 text=CYCLESPRESETS_MT_display_presets.bl_label)
-        row.operator(CYCLESPRESETS_AddPresetObjectDisplay.bl_idname,
-                     text="", icon='ZOOM_IN')
-        row.operator(CYCLESPRESETS_AddPresetObjectDisplay.bl_idname,
-                     text="", icon='ZOOM_OUT').remove_active = True
+        row.menu(CYCLESPRESETS_MT_DisplayPresets.__name__,
+                 text=CYCLESPRESETS_MT_DisplayPresets.bl_label)
+        row.operator(CYCLESPRESETS_OT_AddPreset.bl_idname,
+                     text="", icon='ADD')
+        row.operator(CYCLESPRESETS_OT_AddPreset.bl_idname,
+                     text="", icon='REMOVE').remove_active = True
