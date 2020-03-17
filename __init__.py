@@ -14,19 +14,19 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from .cycles_presets import *
+import bpy
+
 bl_info = {
     "name": "Cycles Presets",
     "description": "Save Cycles Presets",
     "author": "Daniel Engler",
-    "version": (0, 0, 2),
-    "blender": (2, 80, 0),
+    "version": (0, 0, 3),
+    "blender": (2, 82, 0),
     "location": "Properties > Render",
     "category": "Render"
 }
 
-import bpy
-
-from .cycles_presets import *
 
 classes = (
     CYCLESPRESETS_PT_panel,
@@ -34,15 +34,16 @@ classes = (
     CYCLESPRESETS_MT_DisplayPresets,
 )
 
-def register():
-   for cls in classes:
-      bpy.utils.register_class(cls)
 
-    
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+
 def unregister():
-   for cls in reversed(classes):
-      bpy.utils.unregister_class(cls)
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
 
 
 if __name__ == "__main__":
-   register()
+    register()

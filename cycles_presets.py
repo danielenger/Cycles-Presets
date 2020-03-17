@@ -19,7 +19,8 @@ class CYCLESPRESETS_OT_AddPreset(AddPresetBase, Operator):
     bl_label = "Add Cycles Preset"
     preset_menu = "CYCLESPRESETS_MT_DisplayPresets"
 
-    preset_defines = ["cycles = bpy.context.scene.cycles", "render = bpy.context.scene.render"]
+    preset_defines = ["cycles = bpy.context.scene.cycles",
+                      "render = bpy.context.scene.render"]
 
     preset_values = [
         "render.film_transparent",
@@ -38,6 +39,7 @@ class CYCLESPRESETS_OT_AddPreset(AddPresetBase, Operator):
         "cycles.debug_opencl_device_type",
         "cycles.debug_opencl_kernel_type",
         "cycles.debug_opencl_mem_limit",
+        "cycles.debug_optix_cuda_streams",
         "cycles.debug_reset_timeout",
         "cycles.debug_text_timeout",
         "cycles.debug_tile_size",
@@ -70,6 +72,8 @@ class CYCLESPRESETS_OT_AddPreset(AddPresetBase, Operator):
         "cycles.max_bounces",
         "cycles.max_subdivisions",
         "cycles.mesh_light_samples",
+        "cycles.min_light_bounces",
+        "cycles.min_transparent_bounces",
         "cycles.motion_blur_position",
         "cycles.name",
         "cycles.offscreen_dicing_scale",
