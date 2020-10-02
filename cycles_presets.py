@@ -1,10 +1,36 @@
+import inspect
+from pathlib import Path
 
 import bpy
 from bl_operators.presets import AddPresetBase
+from bpy.props import StringProperty, BoolProperty
 from bpy.types import Menu, Operator, Panel
-
+from mathutils import Color
 
 PRESET_SUBDIR = "cycles_presets"
+EXCLUDE_LIST = ["__", "bl_rna", "rna_type", "register", "unregister"]
+CYCLES_KEY_PREFIX = "cycles"
+PRESET_HEAD = """import bpy
+cycles = bpy.context.scene.cycles
+render = bpy.context.scene.render
+
+"""
+
+
+def get_cycles_values():
+    pre_vals = {}
+    cycles_settings_list = inspect.getmembers(bpy.context.scene.cycles)
+    for elem in cycles_settings_list:
+        key, value = elem
+        if all(item not in key for item in EXCLUDE_LIST):
+            if isinstance(value, Color):
+                val = (value.r, value.g, value.b)
+            elif isinstance(value, str):
+                val = f"'{value}'"
+            else:
+                val = value
+            pre_vals[f"{CYCLES_KEY_PREFIX}.{key}"] = val
+    return pre_vals
 
 
 class CYCLESPRESETS_MT_DisplayPresets(Menu):
@@ -22,99 +48,55 @@ class CYCLESPRESETS_OT_AddPreset(AddPresetBase, Operator):
     preset_defines = ["cycles = bpy.context.scene.cycles",
                       "render = bpy.context.scene.render"]
 
-    preset_values = [
-        "render.film_transparent",
-        "cycles.aa_samples",
-        "cycles.ao_bounces",
-        "cycles.ao_bounces_render",
-        "cycles.ao_samples",
-        "cycles.blur_glossy",
-        "cycles.camera_cull_margin",
-        "cycles.caustics_reflective",
-        "cycles.caustics_refractive",
-        "cycles.debug_bvh_layout",
-        "cycles.debug_bvh_time_steps",
-        "cycles.debug_bvh_type",
-        "cycles.debug_cancel_timeout",
-        "cycles.debug_opencl_device_type",
-        "cycles.debug_opencl_kernel_type",
-        "cycles.debug_opencl_mem_limit",
-        "cycles.debug_optix_cuda_streams",
-        "cycles.debug_reset_timeout",
-        "cycles.debug_text_timeout",
-        "cycles.debug_tile_size",
-        "cycles.debug_use_cpu_avx",
-        "cycles.debug_use_cpu_avx2",
-        "cycles.debug_use_cpu_split_kernel",
-        "cycles.debug_use_cpu_sse2",
-        "cycles.debug_use_cpu_sse3",
-        "cycles.debug_use_cpu_sse41",
-        "cycles.debug_use_cuda_adaptive_compile",
-        "cycles.debug_use_cuda_split_kernel",
-        "cycles.debug_use_hair_bvh",
-        "cycles.debug_use_opencl_debug",
-        "cycles.debug_use_spatial_splits",
-        "cycles.device",
-        "cycles.dicing_camera",
-        "cycles.dicing_rate",
-        "cycles.diffuse_bounces",
-        "cycles.diffuse_samples",
-        "cycles.distance_cull_margin",
-        "cycles.feature_set",
-        "cycles.film_exposure",
-        "cycles.film_transparent_glass",
-        "cycles.film_transparent_roughness",
-        "cycles.filter_type",
-        "cycles.filter_width",
-        "cycles.glossy_bounces",
-        "cycles.glossy_samples",
-        "cycles.light_sampling_threshold",
-        "cycles.max_bounces",
-        "cycles.max_subdivisions",
-        "cycles.mesh_light_samples",
-        "cycles.min_light_bounces",
-        "cycles.min_transparent_bounces",
-        "cycles.motion_blur_position",
-        "cycles.name",
-        "cycles.offscreen_dicing_scale",
-        "cycles.pixel_filter_type",
-        "cycles.preview_aa_samples",
-        "cycles.preview_dicing_rate",
-        "cycles.preview_pause",
-        "cycles.preview_samples",
-        "cycles.preview_start_resolution",
-        "cycles.progressive",
-        "cycles.rolling_shutter_duration",
-        "cycles.rolling_shutter_type",
-        "cycles.sample_all_lights_direct",
-        "cycles.sample_all_lights_indirect",
-        "cycles.sample_clamp_direct",
-        "cycles.sample_clamp_indirect",
-        "cycles.samples",
-        "cycles.sampling_pattern",
-        "cycles.seed",
-        "cycles.shading_system",
-        "cycles.subsurface_samples",
-        "cycles.texture_limit",
-        "cycles.texture_limit_render",
-        "cycles.tile_order",
-        "cycles.transmission_bounces",
-        "cycles.transmission_samples",
-        "cycles.transparent_max_bounces",
-        "cycles.use_animated_seed",
-        "cycles.use_bvh_embree",
-        "cycles.use_camera_cull",
-        "cycles.use_distance_cull",
-        "cycles.use_layer_samples",
-        "cycles.use_progressive_refine",
-        "cycles.use_square_samples",
-        "cycles.volume_bounces",
-        "cycles.volume_max_steps",
-        "cycles.volume_samples",
-        "cycles.volume_step_size",
-    ]
-
     preset_subdir = PRESET_SUBDIR
+
+
+class CYCLESPRESETS_OT_AddCyclesPreset(bpy.types.Operator):
+    bl_idname = "cyclespresets.add_cycles_preset"
+    bl_label = "Add Cycles Preset"
+
+    preset_name: StringProperty(name="Name",
+                                description="Save ",
+                                default="")
+
+    film_transparent: BoolProperty(name="Save Film Transparent",
+                                        description="",
+                                        default=True)
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "film_transparent")
+        layout.prop(self, "preset_name")
+
+    def execute(self, context):
+        if self.preset_name == "":
+            self.report({'INFO'}, "Preset needs a name!")
+            return {'CANCELLED'}
+
+        cycles_values = {}
+        cycles_values[f"render.use_motion_blur"] = bpy.context.scene.render.use_motion_blur
+        cycles_values[f"render.motion_blur_shutter"] = bpy.context.scene.render.motion_blur_shutter
+        if self.film_transparent:
+            cycles_values[f"render.film_transparent"] = bpy.context.scene.render.film_transparent
+        cycles_values.update(get_cycles_values())
+
+        preset_lines = [PRESET_HEAD]
+        for key, value in cycles_values.items():
+            line = f"{key} = {value}\n"
+            preset_lines.append(line)
+
+        preset_path = Path(
+            bpy.utils.resource_path('USER')) / Path(
+                f"scripts/presets/{PRESET_SUBDIR}/{self.preset_name}.py")
+
+        with open(preset_path, 'w') as preset_file:
+            preset_file.writelines(preset_lines)
+
+        return {'FINISHED'}
 
 
 class CYCLESPRESETS_PT_panel(Panel):
@@ -130,10 +112,11 @@ class CYCLESPRESETS_PT_panel(Panel):
             return True
 
     def draw(self, context):
-        row = self.layout.row(align=True)
+        layout = self.layout
+        row = layout.row(align=True)
         row.menu(CYCLESPRESETS_MT_DisplayPresets.__name__,
                  text=CYCLESPRESETS_MT_DisplayPresets.bl_label)
-        row.operator(CYCLESPRESETS_OT_AddPreset.bl_idname,
+        row.operator("cyclespresets.add_cycles_preset",
                      text="", icon='ADD')
         row.operator(CYCLESPRESETS_OT_AddPreset.bl_idname,
                      text="", icon='REMOVE').remove_active = True
