@@ -6,7 +6,7 @@ bl_info = {
     "name": "Cycles Presets",
     "description": "Save Cycles Presets",
     "author": "Daniel Engler",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (2, 83, 0),
     "location": "Properties > Render",
     "category": "Render"
